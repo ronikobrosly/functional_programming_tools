@@ -16,7 +16,7 @@ these rules:
    functional version was not possible. Silent violations are the only forbidden move.
 
 Never weaken these rules just to finish faster. Prefer correct-and-stricter over
-quick-and-looser.
+quick-and-looser (with the exception of recursion, which we want to avoid).
 
 ## Specific principles
 
@@ -86,9 +86,7 @@ quick-and-looser.
   conditionals.
 - Replace imperative loops that accumulate into a mutable variable with `map` / `filter`
   / `reduce` / `fold` or equivalent higher-order operations.
-- Use recursion only where it reads more clearly *and* the language makes it safe
-  (tail-call optimization or guaranteed-bounded depth). Otherwise prefer fold/iterate
-  combinators to avoid stack overflow.
+- Generally, try to avoid recursion.
 - Pattern-match **exhaustively** on sum types. Do not use a wildcard/`default` case to
   swallow unhandled variants — let the absence of a case be a compile error or explicit
   failure, so adding a new variant forces you to handle it everywhere.
@@ -162,6 +160,40 @@ If any answer is unsatisfactory, revise before returning the code.
 
 
 ## Specific examples
+
+
+### 0. Avoid recursion
+
+For example, if we're trying to make a function to sum all numbers up to `n`, but only among the numbers that are divisible by 3 or 5, avoid the following:
+
+```python
+from collections.abc import Sequence, Callable
+def until(
+    limit: int,
+    filter_func: Callable[[int], bool],
+    v: int
+) -> list[int]:
+    if v == limit:
+        return []
+    elif filter_func(v):
+        return [v] + until(limit, filter_func, v + 1)
+    else:
+        return until(limit, filter_func, v + 1)
+
+def mult_3_5(x: int) -> bool:
+    return x % 3 == 0 or x % 5 == 0
+
+def sum_functional(limit: int = 10) -> int:
+    return sumr(until(limit, mult_3_5, 0))
+```
+
+...and instead use the simpler (and mostly functional):
+
+```python
+def sum_divisible_by_3_or_5(n):
+    return sum(x for x in range(1, n + 1) if x % 3 == 0 or x % 5 == 0)
+```
+
 
 ### 1. First-Class & Higher-Order Functions
 
@@ -469,22 +501,13 @@ def first_n_lines(path: str, n: int) -> tuple[str, ...]:
 
 ### 15. Additional Principles
 
-- Prefer recursion over mutable loop accumulators for inherently recursive data (trees, graphs), but prefer `map`/`filter`/`reduce` pipelines for linear data.
 - Avoid classes that mix data and behaviour; use functions operating on data instead.
 - Mark functions that depend on external mutable state as `impure_` by naming convention.
 - Write docstrings for every public function; describe *what*, not *how*.
 - Use `@functools.cache` or `@functools.lru_cache` to memoize expensive pure functions.
 
-```python
-from functools import lru_cache
 
-@lru_cache(maxsize=256)
-def fibonacci(n: int) -> int:
-    """Return the nth Fibonacci number (0-indexed)."""
-    if n < 2:
-        return n
-    return fibonacci(n - 1) + fibonacci(n - 2)
-```
+
 
 ---
 
