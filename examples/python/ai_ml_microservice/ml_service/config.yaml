@@ -1,0 +1,16 @@
+server:
+  host: "127.0.0.1"
+  port: 8000
+
+model:
+  path: "artifacts/model.pkl"
+  threshold: 0.5
+
+features:
+  # Used when the database has no attendance row for an applicant.
+  default_attendance: 0.8
+
+database:
+  # "inmemory" runs the demo with no external DB; "postgres" uses the real driver.
+  mode: "inmemory"
+  dsn: "postgresql://user:password@localhost:5432/students"

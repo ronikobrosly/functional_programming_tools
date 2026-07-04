@@ -1,0 +1,13 @@
+[importlinter]
+root_package = app
+
+[importlinter:contract:functional-core]
+name = Pure core must not import the impure shell or app layer
+type = forbidden
+source_modules =
+    app.core
+forbidden_modules =
+    app.shell
+    app.wiring
+    app.main
+    app.model_training
